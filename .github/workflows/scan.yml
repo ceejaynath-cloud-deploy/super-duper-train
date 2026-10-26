@@ -1,0 +1,37 @@
+name: KimiBot HTF Scan
+
+on:
+  schedule:
+    # Every 15 minutes, Mon-Fri, roughly London+NY hours (UTC)
+    - cron: '*/15 7-21 * * 1-5'
+  workflow_dispatch:  # allow manual run
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run one scan cycle
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TWELVE_DATA_API_KEY: ${{ secrets.TWELVE_DATA_API_KEY }}
+          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+        run: |
+          # One-shot mode would be ideal; for now we run main and let it exit
+          # after the first cycle if you add a SINGLE_SCAN=1 env check later.
+          timeout 8m python main.py || true
